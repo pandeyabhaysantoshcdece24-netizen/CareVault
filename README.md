@@ -1,4 +1,4 @@
-# CareVault (CHR-EPS)
+# CareVault
 
 CareVault is a clinical record sharing application (CHR-EPS sample) that lets patients securely share access to their health records with verified doctors for configurable time windows. This repository contains a React frontend and an Express + PostgreSQL backend used for authentication, patient/doctor profiles, consultations, prescriptions, and access permissions.
 
@@ -82,16 +82,3 @@ ALTER TYPE public.access_status ADD VALUE IF NOT EXISTS 'expired';
 
 - "Granted At" displays `created_at` from the `access_permissions` row. The backend uses `CURRENT_TIMESTAMP` when inserting or *re-granting* an access permission, so the UI will show the grant time for new grants or re-grants.
 - Revoke sets `status = 'expired'` — ensure your DB enum contains `'expired'` before revoking.
-
-## Troubleshooting
-
-- Enum error: run the `ALTER TYPE` SQL above, or recreate the enum in fresh DB using the included `migration.sql` snapshot.
-- API errors: check backend console logs; ensure `DATABASE_URL` is correct and migrations have been applied.
-
-## Contributing
-
-- Fork the repo, create a feature branch, and open a PR. Keep changes small and focused.
-
-## License
-
-MIT
