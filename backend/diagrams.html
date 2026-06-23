@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareVault — UML Diagrams</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --border: #d8dee6;
+    --text: #1f2933;
+    --muted: #5f6c7b;
+    --amber: #9a5a00;
+    --amber-dim: #fdf3e2;
+    --blue: #1f5fbf;
+    --teal: #0b7a60;
+    --coral: #b44a2a;
+    --purple: #5c52b0;
+    --green: #2f7a3e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 48px 32px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .cover {
+    margin-bottom: 64px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 40px;
+  }
+
+  .cover-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .cover h1 {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .cover .sub {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .section {
+    margin-bottom: 72px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    min-width: 28px;
+  }
+
+  .section h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .section-desc {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+    margin-left: 44px;
+  }
+
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 24px;
+    overflow-x: auto;
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+  }
+
+  svg text { font-family: 'IBM Plex Sans', sans-serif; }
+
+  /* Actor shape */
+  .actor-head { fill: none; stroke: #52606d; stroke-width: 1; }
+  .actor-body { fill: none; stroke: #52606d; stroke-width: 1; }
+  .actor-label { fill: #334155; font-size: 12px; font-weight: 500; text-anchor: middle; }
+
+  /* Use case ellipses */
+  .uc-ellipse { fill: #f8fafc; stroke-width: 1; }
+  .uc-text { fill: #1f2933; font-size: 11px; text-anchor: middle; dominant-baseline: central; }
+
+  /* System boundary */
+  .sys-rect { fill: none; stroke: #8b97a3; stroke-width: 1; stroke-dasharray: 4 3; }
+  .sys-label { fill: #5f6c7b; font-size: 11px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; }
+
+  /* Association lines */
+  .assoc { stroke: #66788a; stroke-width: 0.8; fill: none; }
+  .extend-dash { stroke: #66788a; stroke-width: 0.7; stroke-dasharray: 3 3; fill: none; }
+
+  /* Class diagram */
+  .class-box { fill: #ffffff; stroke: #c4ced8; stroke-width: 0.8; }
+  .class-header { fill: #f1f5f9; stroke: #c4ced8; stroke-width: 0.8; }
+  .class-name { fill: #d4900a; font-size: 12px; font-weight: 600; text-anchor: middle; dominant-baseline: central; font-family: 'IBM Plex Mono', monospace; }
+  .class-attr { fill: #3f4d5c; font-size: 10px; font-family: 'IBM Plex Mono', monospace; dominant-baseline: central; }
+  .class-type { fill: #6b7b8b; font-size: 10px; font-family: 'IBM Plex Mono', monospace; dominant-baseline: central; }
+  .rel-line { stroke: #6b7b8b; stroke-width: 0.8; fill: none; }
+  .rel-label { fill: #6b7b8b; font-size: 10px; font-family: 'IBM Plex Mono', monospace; text-anchor: middle; }
+  .cardinality { fill: #5f6c7b; font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
+
+  /* Sequence diagram */
+  .lifeline { stroke: #9aa8b5; stroke-width: 0.8; stroke-dasharray: 3 3; }
+  .activation { fill: #edf2f7; stroke: #8b97a3; stroke-width: 0.8; }
+  .seq-box { fill: #f8fafc; stroke: #c4ced8; stroke-width: 0.8; }
+  .seq-label { fill: #334155; font-size: 11px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+  .msg-line { stroke: #66788a; stroke-width: 0.9; fill: none; }
+  .msg-line-return { stroke: #6b7b8b; stroke-width: 0.7; stroke-dasharray: 4 3; fill: none; }
+  .msg-text { fill: #5f6c7b; font-size: 10px; dominant-baseline: central; font-family: 'IBM Plex Mono', monospace; }
+  .msg-text-hi { fill: #d4900a; font-size: 10px; dominant-baseline: central; font-family: 'IBM Plex Mono', monospace; }
+  .loop-box { fill: none; stroke: #c4ced8; stroke-width: 0.8; }
+  .loop-label { fill: #5f6c7b; font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0 48px;
+  }
+
+  .footer {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    margin-top: 48px;
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-label">Project Report · UML Documentation</div>
+  <h1>CareVault (CHR-EPS)</h1>
+  <div class="sub">Centralized Health Record &amp; E-Prescription System — UML Diagrams</div>
+</div>
+
+<!-- ============================================================
+     1. USE CASE DIAGRAM
+     ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Use Case Diagram</h2>
+  </div>
+  <p class="section-desc">System actors and their interactions with CareVault's core functionality.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 880 680" role="img">
+      <title>CareVault Use Case Diagram</title>
+      <desc>Three actors — Patient, Doctor, and Admin — interact with system use cases inside the CareVault system boundary.</desc>
+
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#66788a" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr-open" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#66788a" stroke-width="1.2" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- System boundary -->
+      <rect class="sys-rect" x="160" y="20" width="560" height="640" rx="6"/>
+      <text class="sys-label" x="178" y="42">CareVault System</text>
+
+      <!-- ── ACTOR: Patient (left) ── -->
+      <!-- head -->
+      <circle class="actor-head" cx="66" cy="90" r="16"/>
+      <!-- body + arms + legs -->
+      <line class="actor-body" x1="66" y1="106" x2="66" y2="160"/>
+      <line class="actor-body" x1="40" y1="130" x2="92" y2="130"/>
+      <line class="actor-body" x1="66" y1="160" x2="44" y2="190"/>
+      <line class="actor-body" x1="66" y1="160" x2="88" y2="190"/>
+      <text class="actor-label" x="66" y="210">Patient</text>
+
+      <!-- ── ACTOR: Doctor (left-center) ── -->
+      <circle class="actor-head" cx="66" cy="390" r="16"/>
+      <line class="actor-body" x1="66" y1="406" x2="66" y2="460"/>
+      <line class="actor-body" x1="40" y1="430" x2="92" y2="430"/>
+      <line class="actor-body" x1="66" y1="460" x2="44" y2="490"/>
+      <line class="actor-body" x1="66" y1="460" x2="88" y2="490"/>
+      <text class="actor-label" x="66" y="510">Doctor</text>
+
+      <!-- ── ACTOR: Admin (right) ── -->
+      <circle class="actor-head" cx="814" cy="300" r="16"/>
+      <line class="actor-body" x1="814" y1="316" x2="814" y2="370"/>
+      <line class="actor-body" x1="788" y1="340" x2="840" y2="340"/>
+      <line class="actor-body" x1="814" y1="370" x2="792" y2="400"/>
+      <line class="actor-body" x1="814" y1="370" x2="836" y2="400"/>
+      <text class="actor-label" x="814" y="420">Admin</text>
+
+      <!-- ── PATIENT USE CASES ── -->
+      <!-- Register / Login -->
+      <ellipse class="uc-ellipse" cx="310" cy="85" rx="100" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="85">Register / Login</text>
+
+      <!-- Manage Profile -->
+      <ellipse class="uc-ellipse" cx="310" cy="150" rx="100" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="150">Manage profile</text>
+
+      <!-- View consultations -->
+      <ellipse class="uc-ellipse" cx="310" cy="215" rx="100" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="215">View consultations</text>
+
+      <!-- Grant / Revoke access -->
+      <ellipse class="uc-ellipse" cx="310" cy="280" rx="108" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="280">Grant / revoke access</text>
+
+      <!-- Manage allergies -->
+      <ellipse class="uc-ellipse" cx="310" cy="345" rx="108" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="345">Manage allergies</text>
+
+      <!-- Manage chronic conditions -->
+      <ellipse class="uc-ellipse" cx="310" cy="410" rx="120" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="410">Manage chronic conditions</text>
+
+      <!-- Manage emergency contacts -->
+      <ellipse class="uc-ellipse" cx="310" cy="475" rx="120" ry="22" stroke="#3a7bd5"/>
+      <text class="uc-text" x="310" y="475">Manage emergency contacts</text>
+
+      <!-- ── DOCTOR USE CASES ── -->
+      <!-- Create consultation -->
+      <ellipse class="uc-ellipse" cx="590" cy="215" rx="110" ry="22" stroke="#1d9e75"/>
+      <text class="uc-text" x="590" y="215">Create consultation</text>
+
+      <!-- Write prescription -->
+      <ellipse class="uc-ellipse" cx="590" cy="280" rx="110" ry="22" stroke="#1d9e75"/>
+      <text class="uc-text" x="590" y="280">Write prescription</text>
+
+      <!-- Upload OCR scan -->
+      <ellipse class="uc-ellipse" cx="590" cy="345" rx="110" ry="22" stroke="#9a5a00"/>
+      <text class="uc-text" x="590" y="345">Upload OCR scan</text>
+
+      <!-- View patient records -->
+      <ellipse class="uc-ellipse" cx="590" cy="410" rx="110" ry="22" stroke="#1d9e75"/>
+      <text class="uc-text" x="590" y="410">View patient records</text>
+
+      <!-- Emergency access -->
+      <ellipse class="uc-ellipse" cx="590" cy="475" rx="110" ry="22" stroke="#1d9e75"/>
+      <text class="uc-text" x="590" y="475">Emergency access</text>
+
+      <!-- Manage active medications -->
+      <ellipse class="uc-ellipse" cx="590" cy="540" rx="120" ry="22" stroke="#1d9e75"/>
+      <text class="uc-text" x="590" y="540">Manage active medications</text>
+
+      <!-- Manage clinics -->
+      <ellipse class="uc-ellipse" cx="590" cy="605" rx="110" ry="22" stroke="#1d9e75"/>
+      <text class="uc-text" x="590" y="605">Manage clinics</text>
+
+      <!-- ── ADMIN USE CASES ── -->
+      <!-- Verify doctor -->
+      <ellipse class="uc-ellipse" cx="590" cy="85" rx="110" ry="22" stroke="#d4900a"/>
+      <text class="uc-text" x="590" y="85">Verify doctor</text>
+
+      <!-- Manage users -->
+      <ellipse class="uc-ellipse" cx="590" cy="150" rx="110" ry="22" stroke="#d4900a"/>
+      <text class="uc-text" x="590" y="150">Manage users</text>
+
+      <!-- ── PATIENT ASSOCIATIONS ── -->
+      <line class="assoc" x1="82" y1="120" x2="200" y2="120" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="140" x2="200" y2="150" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="150" x2="200" y2="215" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="155" x2="200" y2="280" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="160" x2="182" y2="345" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="168" x2="472" y2="345" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="165" x2="182" y2="410" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="170" x2="182" y2="475" marker-end="url(#arr-open)"/>
+
+      <!-- ── DOCTOR ASSOCIATIONS ── -->
+      <line class="assoc" x1="82" y1="430" x2="472" y2="215" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="435" x2="472" y2="280" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="445" x2="472" y2="410" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="450" x2="472" y2="475" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="455" x2="462" y2="540" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="82" y1="460" x2="472" y2="605" marker-end="url(#arr-open)"/>
+
+      <!-- Register/login also for doctor -->
+      <line class="assoc" x1="82" y1="406" x2="200" y2="85" marker-end="url(#arr-open)"/>
+
+      <!-- ── ADMIN ASSOCIATIONS ── -->
+      <line class="assoc" x1="798" y1="310" x2="708" y2="100" marker-end="url(#arr-open)"/>
+      <line class="assoc" x1="798" y1="315" x2="708" y2="150" marker-end="url(#arr-open)"/>
+
+      <!-- ── «include» / «extend» notes ── -->
+      <!-- Write prescription includes create consultation -->
+      <line class="extend-dash" x1="590" y1="258" x2="590" y2="237" marker-end="url(#arr-open)"/>
+      <text class="uc-text" x="620" y="248" style="font-size:9px;fill:#5f6c7b;">«include»</text>
+
+    </svg>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================
+     2. CLASS DIAGRAM
+     ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Class Diagram</h2>
+  </div>
+  <p class="section-desc">Core domain entities, their attributes, and relationships.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 880 920" role="img">
+      <title>CareVault Class Diagram</title>
+      <desc>UML class diagram showing entities: User, Patient, Doctor, Clinic, Consultation, Prescription, PrescriptionItem, ActiveMedication, PatientAllergy, ChronicCondition, EmergencyContact, AccessPermission.</desc>
+
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#66788a" stroke-width="1.2" stroke-linecap="round"/>
+        </marker>
+        <marker id="diamond" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,6 6,2 12,6 6,10" fill="none" stroke="#66788a" stroke-width="1"/>
+        </marker>
+        <marker id="tri" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="#f1f5f9" stroke="#66788a" stroke-width="1"/>
+        </marker>
+      </defs>
+
+      <!-- Helper: draws a class box -->
+      <!-- USER -->
+      <g id="User">
+        <rect class="class-box" x="330" y="20" width="200" height="118" rx="4"/>
+        <rect class="class-header" x="330" y="20" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="330" y="44" width="200" height="4"/>
+        <text class="class-name" x="430" y="34">User</text>
+        <text class="class-attr" x="342" y="64">id : uuid (PK)</text>
+        <text class="class-attr" x="342" y="80">email : string</text>
+        <text class="class-attr" x="342" y="96">phone : string</text>
+        <text class="class-attr" x="342" y="112">role : patient|doctor|admin</text>
+        <text class="class-attr" x="342" y="128">password_hash : string</text>
+      </g>
+
+      <!-- PATIENT -->
+      <g id="Patient">
+        <rect class="class-box" x="30" y="220" width="200" height="148" rx="4"/>
+        <rect class="class-header" x="30" y="220" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="30" y="244" width="200" height="4"/>
+        <text class="class-name" x="130" y="234">Patient</text>
+        <text class="class-attr" x="42" y="264">id : uuid (PK)</text>
+        <text class="class-attr" x="42" y="280">user_id : uuid (FK)</text>
+        <text class="class-attr" x="42" y="296">full_name : string</text>
+        <text class="class-attr" x="42" y="312">health_id : string</text>
+        <text class="class-attr" x="42" y="328">date_of_birth : date</text>
+        <text class="class-attr" x="42" y="344">gender : string</text>
+        <text class="class-attr" x="42" y="360">blood_group : string</text>
+      </g>
+
+      <!-- DOCTOR -->
+      <g id="Doctor">
+        <rect class="class-box" x="640" y="220" width="200" height="132" rx="4"/>
+        <rect class="class-header" x="640" y="220" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="640" y="244" width="200" height="4"/>
+        <text class="class-name" x="740" y="234">Doctor</text>
+        <text class="class-attr" x="652" y="264">id : uuid (PK)</text>
+        <text class="class-attr" x="652" y="280">user_id : uuid (FK)</text>
+        <text class="class-attr" x="652" y="296">full_name : string</text>
+        <text class="class-attr" x="652" y="312">license_number : string</text>
+        <text class="class-attr" x="652" y="328">specialization : string</text>
+        <text class="class-attr" x="652" y="344">is_verified : boolean</text>
+      </g>
+
+      <!-- CLINIC -->
+      <g id="Clinic">
+        <rect class="class-box" x="640" y="440" width="200" height="132" rx="4"/>
+        <rect class="class-header" x="640" y="440" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="640" y="464" width="200" height="4"/>
+        <text class="class-name" x="740" y="454">Clinic</text>
+        <text class="class-attr" x="652" y="480">id : uuid (PK)</text>
+        <text class="class-attr" x="652" y="496">doctor_id : uuid (FK)</text>
+        <text class="class-attr" x="652" y="512">clinic_name : string</text>
+        <text class="class-attr" x="652" y="528">address : string</text>
+        <text class="class-attr" x="652" y="544">email : string</text>
+        <text class="class-attr" x="652" y="560">phone : string</text>
+      </g>
+
+      <!-- ACCESS PERMISSION -->
+      <g id="AccessPermission">
+        <rect class="class-box" x="330" y="220" width="260" height="116" rx="4"/>
+        <rect class="class-header" x="330" y="220" width="260" height="28" rx="4"/>
+        <rect class="class-header" x="330" y="244" width="260" height="4"/>
+        <text class="class-name" x="460" y="234">AccessPermission</text>
+        <text class="class-attr" x="342" y="264">id : uuid (PK)</text>
+        <text class="class-attr" x="342" y="280">patient_id : uuid (FK)</text>
+        <text class="class-attr" x="342" y="296">doctor_id : uuid (FK)</text>
+        <text class="class-attr" x="342" y="312">status : ACTIVE|REVOKED</text>
+        <text class="class-attr" x="342" y="328">expires_at : timestamp?</text>
+      </g>
+
+      <!-- CONSULTATION -->
+      <g id="Consultation">
+        <rect class="class-box" x="330" y="430" width="260" height="116" rx="4"/>
+        <rect class="class-header" x="330" y="430" width="260" height="28" rx="4"/>
+        <rect class="class-header" x="330" y="454" width="260" height="4"/>
+        <text class="class-name" x="460" y="444">Consultation</text>
+        <text class="class-attr" x="342" y="472">id : uuid (PK)</text>
+        <text class="class-attr" x="342" y="488">patient_id : uuid (FK)</text>
+        <text class="class-attr" x="342" y="504">doctor_id : uuid (FK)</text>
+        <text class="class-attr" x="342" y="520">status : in_progress|completed</text>
+        <text class="class-attr" x="342" y="536">consultation_date : timestamp</text>
+      </g>
+
+      <!-- PRESCRIPTION -->
+      <g id="Prescription">
+        <rect class="class-box" x="330" y="650" width="260" height="84" rx="4"/>
+        <rect class="class-header" x="330" y="650" width="260" height="28" rx="4"/>
+        <rect class="class-header" x="330" y="674" width="260" height="4"/>
+        <text class="class-name" x="460" y="664">Prescription</text>
+        <text class="class-attr" x="342" y="692">id : uuid (PK)</text>
+        <text class="class-attr" x="342" y="708">consultation_id : uuid (FK)</text>
+        <text class="class-attr" x="342" y="724">issued_at : timestamp</text>
+      </g>
+
+      <!-- PRESCRIPTION ITEM -->
+      <g id="PrescriptionItem">
+        <rect class="class-box" x="260" y="800" width="220" height="100" rx="4"/>
+        <rect class="class-header" x="260" y="800" width="220" height="28" rx="4"/>
+        <rect class="class-header" x="260" y="824" width="220" height="4"/>
+        <text class="class-name" x="370" y="814">PrescriptionItem</text>
+        <text class="class-attr" x="272" y="844">id : uuid (PK)</text>
+        <text class="class-attr" x="272" y="860">prescription_id : uuid (FK)</text>
+        <text class="class-attr" x="272" y="876">drug_name : string</text>
+        <text class="class-attr" x="272" y="892">dosage / frequency / days</text>
+      </g>
+
+      <!-- ACTIVE MEDICATION -->
+      <g id="ActiveMedication">
+        <rect class="class-box" x="490" y="800" width="220" height="100" rx="4"/>
+        <rect class="class-header" x="490" y="800" width="220" height="28" rx="4"/>
+        <rect class="class-header" x="490" y="824" width="220" height="4"/>
+        <text class="class-name" x="600" y="814">ActiveMedication</text>
+        <text class="class-attr" x="502" y="844">id : uuid (PK)</text>
+        <text class="class-attr" x="502" y="860">user_id : uuid (FK)</text>
+        <text class="class-attr" x="502" y="876">name / dosage : string</text>
+        <text class="class-attr" x="502" y="892">prescribed_by : uuid (FK)</text>
+      </g>
+
+      <!-- PATIENT ALLERGY -->
+      <g id="PatientAllergy">
+        <rect class="class-box" x="30" y="460" width="200" height="100" rx="4"/>
+        <rect class="class-header" x="30" y="460" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="30" y="484" width="200" height="4"/>
+        <text class="class-name" x="130" y="474">PatientAllergy</text>
+        <text class="class-attr" x="42" y="500">id : uuid (PK)</text>
+        <text class="class-attr" x="42" y="516">patient_id : uuid (FK)</text>
+        <text class="class-attr" x="42" y="532">allergen : string</text>
+        <text class="class-attr" x="42" y="548">severity : mild|mod|severe</text>
+      </g>
+
+      <!-- CHRONIC CONDITION -->
+      <g id="ChronicCondition">
+        <rect class="class-box" x="30" y="640" width="200" height="116" rx="4"/>
+        <rect class="class-header" x="30" y="640" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="30" y="664" width="200" height="4"/>
+        <text class="class-name" x="130" y="654">ChronicCondition</text>
+        <text class="class-attr" x="42" y="680">id : uuid (PK)</text>
+        <text class="class-attr" x="42" y="696">patient_id : uuid (FK)</text>
+        <text class="class-attr" x="42" y="712">condition_name : string</text>
+        <text class="class-attr" x="42" y="728">status : string</text>
+        <text class="class-attr" x="42" y="744">diagnosed_date : date</text>
+      </g>
+
+      <!-- EMERGENCY CONTACT -->
+      <g id="EmergencyContact">
+        <rect class="class-box" x="30" y="800" width="200" height="100" rx="4"/>
+        <rect class="class-header" x="30" y="800" width="200" height="28" rx="4"/>
+        <rect class="class-header" x="30" y="824" width="200" height="4"/>
+        <text class="class-name" x="130" y="814">EmergencyContact</text>
+        <text class="class-attr" x="42" y="844">id : uuid (PK)</text>
+        <text class="class-attr" x="42" y="860">patient_id : uuid (FK)</text>
+        <text class="class-attr" x="42" y="876">contact_name : string</text>
+        <text class="class-attr" x="42" y="892">contact_phone / email</text>
+      </g>
+
+      <!-- ── RELATIONSHIPS ── -->
+
+      <!-- User → Patient (1 to 0..1) -->
+      <line class="rel-line" x1="330" y1="79" x2="130" y2="220" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="300" y="145">1</text>
+      <text class="cardinality" x="148" y="216">0..1</text>
+
+      <!-- User → Doctor (1 to 0..1) -->
+      <line class="rel-line" x1="530" y1="79" x2="740" y2="220" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="565" y="145">1</text>
+      <text class="cardinality" x="720" y="216">0..1</text>
+
+      <!-- Patient → AccessPermission -->
+      <line class="rel-line" x1="230" y1="278" x2="330" y2="278" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="240" y="272">1</text>
+      <text class="cardinality" x="310" y="272">0..*</text>
+
+      <!-- Doctor → AccessPermission -->
+      <line class="rel-line" x1="640" y1="278" x2="590" y2="278" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="625" y="272">1</text>
+      <text class="cardinality" x="596" y="272">0..*</text>
+
+      <!-- Patient → Consultation -->
+      <line class="rel-line" x1="130" y1="368" x2="360" y2="430" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="148" y="400">1</text>
+      <text class="cardinality" x="350" y="436">0..*</text>
+
+      <!-- Doctor → Consultation -->
+      <line class="rel-line" x1="640" y1="330" x2="590" y2="488" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="624" y="400">1</text>
+      <text class="cardinality" x="592" y="486">0..*</text>
+
+      <!-- Consultation → Prescription -->
+      <line class="rel-line" x1="460" y1="546" x2="460" y2="650" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="468" y="590">1</text>
+      <text class="cardinality" x="468" y="648">0..1</text>
+
+      <!-- Prescription → PrescriptionItem -->
+      <line class="rel-line" x1="410" y1="734" x2="390" y2="800" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="368" y="760">1</text>
+      <text class="cardinality" x="378" y="800">1..*</text>
+
+      <!-- Prescription → ActiveMedication -->
+      <line class="rel-line" x1="540" y1="734" x2="580" y2="800" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="560" y="760">creates</text>
+
+      <!-- Patient → Allergy -->
+      <line class="rel-line" x1="130" y1="368" x2="130" y2="460" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="136" y="415">0..*</text>
+
+      <!-- Patient → ChronicCondition -->
+      <line class="rel-line" x1="130" y1="560" x2="130" y2="640" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="136" y="590">0..*</text>
+
+      <!-- Patient → EmergencyContact -->
+      <line class="rel-line" x1="130" y1="756" x2="130" y2="800" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="136" y="768">0..*</text>
+
+      <!-- Doctor → Clinic -->
+      <line class="rel-line" x1="740" y1="352" x2="740" y2="440" marker-end="url(#arr2)"/>
+      <text class="cardinality" x="748" y="398">0..*</text>
+
+    </svg>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================
+     3. SEQUENCE DIAGRAM
+     ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Sequence Diagram</h2>
+  </div>
+  <p class="section-desc">Doctor-initiated consultation flow: from authentication through consultation and prescription creation.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 880 760" role="img">
+      <title>CareVault Sequence Diagram — Consultation Flow</title>
+      <desc>Sequence diagram showing a verified doctor logging in, creating a consultation, and writing a prescription for a patient.</desc>
+
+      <defs>
+        <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#66788a" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr3-ret" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b7b8b" stroke-width="1.2" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- ── LIFELINE HEADERS ── -->
+      <!-- Doctor -->
+      <rect class="seq-box" x="30" y="20" width="110" height="36" rx="4"/>
+      <text class="seq-label" x="85" y="38">Doctor</text>
+
+      <!-- API Server -->
+      <rect class="seq-box" x="210" y="20" width="130" height="36" rx="4"/>
+      <text class="seq-label" x="275" y="38">API Server</text>
+
+      <!-- Auth Middleware -->
+      <rect class="seq-box" x="390" y="20" width="130" height="36" rx="4"/>
+      <text class="seq-label" x="455" y="38">Auth Middleware</text>
+
+      <!-- Database -->
+      <rect class="seq-box" x="570" y="20" width="110" height="36" rx="4"/>
+      <text class="seq-label" x="625" y="38">Database</text>
+
+      <!-- ── LIFELINES (dashed vertical) ── -->
+      <line class="lifeline" x1="85" y1="56" x2="85" y2="750"/>
+      <line class="lifeline" x1="275" y1="56" x2="275" y2="750"/>
+      <line class="lifeline" x1="455" y1="56" x2="455" y2="750"/>
+      <line class="lifeline" x1="625" y1="56" x2="625" y2="750"/>
+
+      <!-- ── ACTIVATIONS ── -->
+      <rect class="activation" x="80" y="90" width="10" height="620"/>
+      <rect class="activation" x="270" y="100" width="10" height="610"/>
+      <rect class="activation" x="450" y="110" width="10" height="80"/>
+      <rect class="activation" x="620" y="120" width="10" height="60"/>
+      <rect class="activation" x="450" y="220" width="10" height="40"/>
+      <rect class="activation" x="620" y="230" width="10" height="30"/>
+      <rect class="activation" x="450" y="300" width="10" height="60"/>
+      <rect class="activation" x="620" y="310" width="10" height="50"/>
+      <rect class="activation" x="450" y="410" width="10" height="50"/>
+      <rect class="activation" x="620" y="420" width="10" height="40"/>
+
+      <!-- ── GROUP: Login ── -->
+      <rect class="loop-box" x="96" y="80" width="680" height="130" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="80" width="56" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="93">login</text>
+
+      <!-- 1: POST /login -->
+      <line class="msg-line" x1="90" y1="105" x2="268" y2="105" marker-end="url(#arr3)"/>
+      <text class="msg-text-hi" x="175" y="100">POST /api/users/login</text>
+
+      <!-- 2: validate JWT -->
+      <line class="msg-line" x1="280" y1="120" x2="448" y2="120" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="355" y="115">validate credentials</text>
+
+      <!-- 3: query user -->
+      <line class="msg-line" x1="460" y1="135" x2="618" y2="135" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="535" y="130">SELECT user</text>
+
+      <!-- 4: return user -->
+      <line class="msg-line-return" x1="618" y1="155" x2="462" y2="155" marker-end="url(#arr3-ret)"/>
+      <text class="msg-text" x="535" y="150">user row</text>
+
+      <!-- 5: return JWT -->
+      <line class="msg-line-return" x1="268" y1="175" x2="92" y2="175" marker-end="url(#arr3-ret)"/>
+      <text class="msg-text" x="175" y="170">JWT token</text>
+
+      <!-- ── GROUP: Create Consultation ── -->
+      <rect class="loop-box" x="96" y="215" width="680" height="130" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="215" width="106" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="228">create consultation</text>
+
+      <!-- 6: POST consultation -->
+      <line class="msg-line" x1="90" y1="245" x2="268" y2="245" marker-end="url(#arr3)"/>
+      <text class="msg-text-hi" x="175" y="240">POST /api/consultations</text>
+
+      <!-- 7: authenticate -->
+      <line class="msg-line" x1="280" y1="258" x2="448" y2="258" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="355" y="253">authenticate JWT</text>
+
+      <!-- 8: check access permission -->
+      <line class="msg-line" x1="460" y1="272" x2="618" y2="272" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="535" y="267">SELECT access_permission</text>
+
+      <!-- 9: INSERT consultation -->
+      <line class="msg-line" x1="460" y1="292" x2="618" y2="292" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="535" y="287">INSERT consultation</text>
+
+      <!-- 10: return consultation_id -->
+      <line class="msg-line-return" x1="268" y1="325" x2="92" y2="325" marker-end="url(#arr3-ret)"/>
+      <text class="msg-text" x="175" y="320">consultation_id</text>
+
+      <!-- ── GROUP: Write Prescription ── -->
+      <rect class="loop-box" x="96" y="355" width="680" height="130" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="355" width="110" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="368">write prescription</text>
+
+      <!-- 11: POST prescription -->
+      <line class="msg-line" x1="90" y1="390" x2="268" y2="390" marker-end="url(#arr3)"/>
+      <text class="msg-text-hi" x="175" y="385">POST /consultations/:id/prescription</text>
+
+      <!-- 12: authenticate -->
+      <line class="msg-line" x1="280" y1="405" x2="448" y2="405" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="355" y="400">authenticate + requireVerifiedDoctor</text>
+
+      <!-- 13: UPSERT prescription items -->
+      <line class="msg-line" x1="460" y1="425" x2="618" y2="425" marker-end="url(#arr3)"/>
+      <text class="msg-text" x="535" y="420">UPSERT prescription + items</text>
+
+      <!-- 14: response -->
+      <line class="msg-line-return" x1="268" y1="462" x2="92" y2="462" marker-end="url(#arr3-ret)"/>
+      <text class="msg-text" x="175" y="457">prescription_id, items_count</text>
+
+    </svg>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================
+     4. PATIENT SEQUENCE DIAGRAM
+     ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Patient Sequence Diagram</h2>
+  </div>
+  <p class="section-desc">Patient-initiated flow: login, profile update, allergy/chronic/emergency updates, and OCR scan upload.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 880 1120" role="img">
+      <title>CareVault Sequence Diagram — Patient Flow</title>
+      <desc>Sequence diagram showing a patient logging in, updating profile/allergies/chronic conditions/emergency info, and uploading an OCR scan.</desc>
+
+      <defs>
+        <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#66788a" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr4-ret" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b7b8b" stroke-width="1.2" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- ── LIFELINE HEADERS ── -->
+      <rect class="seq-box" x="30" y="20" width="110" height="36" rx="4"/>
+      <text class="seq-label" x="85" y="38">Patient</text>
+
+      <rect class="seq-box" x="210" y="20" width="130" height="36" rx="4"/>
+      <text class="seq-label" x="275" y="38">API Server</text>
+
+      <rect class="seq-box" x="390" y="20" width="130" height="36" rx="4"/>
+      <text class="seq-label" x="455" y="38">Auth Middleware</text>
+
+      <rect class="seq-box" x="570" y="20" width="110" height="36" rx="4"/>
+      <text class="seq-label" x="625" y="38">Database</text>
+
+      <rect class="seq-box" x="730" y="20" width="110" height="36" rx="4"/>
+      <text class="seq-label" x="785" y="38">OCR Service</text>
+
+      <!-- ── LIFELINES ── -->
+      <line class="lifeline" x1="85" y1="56" x2="85" y2="1080"/>
+      <line class="lifeline" x1="275" y1="56" x2="275" y2="1080"/>
+      <line class="lifeline" x1="455" y1="56" x2="455" y2="1080"/>
+      <line class="lifeline" x1="625" y1="56" x2="625" y2="1080"/>
+      <line class="lifeline" x1="785" y1="56" x2="785" y2="1080"/>
+
+      <!-- ── ACTIVATIONS ── -->
+      <rect class="activation" x="80" y="90" width="10" height="930"/>
+      <rect class="activation" x="270" y="100" width="10" height="920"/>
+      <rect class="activation" x="450" y="110" width="10" height="55"/>
+      <rect class="activation" x="620" y="120" width="10" height="40"/>
+      <rect class="activation" x="450" y="240" width="10" height="45"/>
+      <rect class="activation" x="620" y="250" width="10" height="35"/>
+      <rect class="activation" x="450" y="370" width="10" height="45"/>
+      <rect class="activation" x="620" y="380" width="10" height="35"/>
+      <rect class="activation" x="450" y="500" width="10" height="45"/>
+      <rect class="activation" x="620" y="510" width="10" height="35"/>
+      <rect class="activation" x="450" y="630" width="10" height="45"/>
+      <rect class="activation" x="620" y="640" width="10" height="35"/>
+      <rect class="activation" x="450" y="805" width="10" height="50"/>
+      <rect class="activation" x="780" y="860" width="10" height="70"/>
+      <rect class="activation" x="620" y="950" width="10" height="40"/>
+
+      <!-- ── GROUP: Login ── -->
+      <rect class="loop-box" x="96" y="80" width="680" height="130" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="80" width="56" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="93">login</text>
+
+      <line class="msg-line" x1="90" y1="105" x2="268" y2="105" marker-end="url(#arr4)"/>
+      <text class="msg-text-hi" x="175" y="100">POST /api/users/login</text>
+
+      <line class="msg-line" x1="280" y1="120" x2="448" y2="120" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="355" y="115">validate credentials</text>
+
+      <line class="msg-line" x1="460" y1="135" x2="618" y2="135" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="535" y="130">SELECT user + patient</text>
+
+      <line class="msg-line-return" x1="618" y1="155" x2="462" y2="155" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="535" y="150">patient row</text>
+
+      <line class="msg-line-return" x1="268" y1="175" x2="92" y2="175" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="175" y="170">JWT token</text>
+
+      <!-- ── GROUP: Profile Update ── -->
+      <rect class="loop-box" x="96" y="210" width="680" height="120" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="210" width="110" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="223">profile update</text>
+
+      <line class="msg-line" x1="90" y1="238" x2="268" y2="238" marker-end="url(#arr4)"/>
+      <text class="msg-text-hi" x="175" y="233">PUT /api/patients</text>
+
+      <line class="msg-line" x1="280" y1="255" x2="448" y2="255" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="355" y="250">authenticate patient</text>
+
+      <line class="msg-line" x1="460" y1="268" x2="618" y2="268" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="535" y="263">UPDATE patients</text>
+
+      <line class="msg-line-return" x1="268" y1="296" x2="92" y2="296" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="175" y="291">profile updated</text>
+
+      <!-- ── GROUP: Allergy Update ── -->
+      <rect class="loop-box" x="96" y="340" width="680" height="120" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="340" width="112" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="353">allergy update</text>
+
+      <line class="msg-line" x1="90" y1="368" x2="268" y2="368" marker-end="url(#arr4)"/>
+      <text class="msg-text-hi" x="175" y="363">PUT /api/patients/allergies/:id</text>
+
+      <line class="msg-line" x1="280" y1="385" x2="448" y2="385" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="355" y="380">authenticate patient</text>
+
+      <line class="msg-line" x1="460" y1="398" x2="618" y2="398" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="535" y="393">UPDATE patient_allergies</text>
+
+      <line class="msg-line-return" x1="268" y1="426" x2="92" y2="426" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="175" y="421">allergy updated</text>
+
+      <!-- ── GROUP: Chronic Condition Update ── -->
+      <rect class="loop-box" x="96" y="470" width="680" height="120" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="470" width="158" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="483">chronic condition update</text>
+
+      <line class="msg-line" x1="90" y1="498" x2="268" y2="498" marker-end="url(#arr4)"/>
+      <text class="msg-text-hi" x="175" y="493">PUT /api/patients/chronic-conditions/:id</text>
+
+      <line class="msg-line" x1="280" y1="515" x2="448" y2="515" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="355" y="510">authenticate patient</text>
+
+      <line class="msg-line" x1="460" y1="528" x2="618" y2="528" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="535" y="523">UPDATE chronic_conditions</text>
+
+      <line class="msg-line-return" x1="268" y1="556" x2="92" y2="556" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="175" y="551">condition updated</text>
+
+      <!-- ── GROUP: Emergency Info Update ── -->
+      <rect class="loop-box" x="96" y="600" width="680" height="120" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="600" width="134" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="613">emergency update</text>
+
+      <line class="msg-line" x1="90" y1="628" x2="268" y2="628" marker-end="url(#arr4)"/>
+      <text class="msg-text-hi" x="175" y="623">PUT /api/patients/emergency-info/:id</text>
+
+      <line class="msg-line" x1="280" y1="645" x2="448" y2="645" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="355" y="640">authenticate patient</text>
+
+      <line class="msg-line" x1="460" y1="658" x2="618" y2="658" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="535" y="653">UPDATE emergency_info</text>
+
+      <line class="msg-line-return" x1="268" y1="686" x2="92" y2="686" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="175" y="681">emergency info updated</text>
+
+      <!-- ── GROUP: OCR Scan Upload ── -->
+      <rect class="loop-box" x="96" y="730" width="680" height="300" rx="3"/>
+      <rect fill="#f8fafc" stroke="none" x="96" y="730" width="110" height="18" rx="2"/>
+      <text class="loop-label" x="100" y="743">OCR scan upload</text>
+
+      <line class="msg-line" x1="90" y1="760" x2="268" y2="760" marker-end="url(#arr4)"/>
+      <text class="msg-text-hi" x="175" y="755">POST /api/ocr/scan (multipart)</text>
+
+      <line class="msg-line" x1="280" y1="780" x2="448" y2="780" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="355" y="775">authenticate + validate file</text>
+
+      <line class="msg-line" x1="460" y1="812" x2="770" y2="812" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="612" y="807">image buffer</text>
+
+      <rect class="seq-box" x="706" y="838" width="136" height="44" rx="3"/>
+      <text class="msg-text" x="714" y="854">PaddleOCR parse</text>
+      <text class="msg-text" x="714" y="868">LLM normalization</text>
+
+      <line class="msg-line-return" x1="770" y1="900" x2="462" y2="900" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="606" y="895">structured fields</text>
+
+      <line class="msg-line" x1="460" y1="970" x2="618" y2="970" marker-end="url(#arr4)"/>
+      <text class="msg-text" x="535" y="965">INSERT prescription rows</text>
+
+      <line class="msg-line-return" x1="268" y1="998" x2="92" y2="998" marker-end="url(#arr4-ret)"/>
+      <text class="msg-text" x="175" y="993">prescription_id, drugs_count</text>
+    </svg>
+  </div>
+</div>
+
+<div class="footer">
+  CareVault (CHR-EPS) &nbsp;·&nbsp; UML Documentation &nbsp;·&nbsp; April 2026
+</div>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+flowchart LR
+
+CLIENT[Client]
+SCAN[POST /api/ocr/scan]
+LEGACY[POST /api/ocr/legacy-upload]
+HEALTH[GET /api/ocr/health]
+
+AUTH[Auth patient only]
+UPLOAD[Upload JPG/PNG/PDF]
+CTRL[OCR Controller]
+CHECK{Legacy PDF single page?}
+PARSE[OCR + Parse meds]
+VALID{Valid medication data?}
+SAVE[Save prescription]
+DB[(PostgreSQL)]
+OK[200 OK]
+ERR1[400 VALIDATION_ERROR]
+ERR2[400 DOCUMENT_READ_FAILED]
+CLEAN[Cleanup temp file]
+HSTAT[Health 200/202]
+
+CLIENT --> SCAN --> UPLOAD --> CTRL --> CHECK
+CLIENT --> LEGACY --> AUTH --> UPLOAD
+CHECK -- Yes --> PARSE
+CHECK -- No --> ERR1 --> CLEAN
+PARSE --> VALID
+VALID -- Yes --> SAVE --> DB --> OK --> CLEAN
+VALID -- No --> ERR2 --> CLEAN
+
+CLIENT --> HEALTH --> HSTAT
+
+classDef api fill:#eaf3ff,stroke:#1d4ed8,stroke-width:2px,color:#0b2a6f
+classDef step fill:#ecfeff,stroke:#0e7490,stroke-width:2px,color:#164e63
+classDef decision fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#7c2d12
+classDef error fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
+classDef db fill:#ecfdf5,stroke:#16a34a,stroke-width:2px,color:#14532d
+classDef ok fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+
+class CLIENT,SCAN,LEGACY,HEALTH,AUTH,UPLOAD,CTRL,HSTAT api
+class PARSE,SAVE,CLEAN step
+class CHECK,VALID decision
+class ERR1,ERR2 error
+class DB db
+class OK ok

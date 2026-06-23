@@ -1,0 +1,63 @@
+%%{init: {"flowchart": {"htmlLabels": true}} }%%
+flowchart LR
+    %% Entities
+    USERS["fa:fa-users USERS<br/>--------------------<br/><u>id</u> (PK)<br/>email (UK)<br/>phone (UK)<br/>password_hash<br/>role<br/>created_at"]
+    PATIENTS["fa:fa-user-injured PATIENTS<br/>--------------------<br/><u>id</u> (PK)<br/>user_id (FK)<br/>health_id (UK)<br/>full_name<br/>date_of_birth<br/>gender<br/>blood_group"]
+    DOCTORS["fa:fa-user-md DOCTORS<br/>--------------------<br/><u>id</u> (PK)<br/>user_id (FK)<br/>full_name<br/>license_number (UK)<br/>specialization<br/>is_verified<br/>updated_at<br/>created_at"]
+    CLINICS["fa:fa-clinic-medical CLINICS<br/>--------------------<br/><u>id</u> (PK)<br/>doctor_id (FK)<br/>clinic_name<br/>address<br/>logo_url<br/>email<br/>phone<br/>created_at<br/>updated_at"]
+    CONSULTATIONS["fa:fa-stethoscope CONSULTATIONS<br/>--------------------<br/><u>id</u> (PK)<br/>patient_id (FK)<br/>doctor_id (FK)<br/>consultation_date<br/>status<br/>updated_at"]
+    PRESCRIPTIONS["fa:fa-file-prescription PRESCRIPTIONS<br/>--------------------<br/><u>id</u> (PK)<br/>consultation_id (FK, UK)<br/>patient_id (FK)<br/>doctor_id (FK)<br/>issued_at<br/>created_at<br/>updated_at<br/>doctor_notes"]
+    PRESCRIPTION_ITEMS["fa:fa-capsules PRESCRIPTION_ITEMS<br/>--------------------<br/><u>id</u> (PK)<br/>prescription_id (FK)<br/>drug_name<br/>dosage<br/>frequency<br/>duration_days"]
+    ACTIVE_MEDICATION["fa:fa-pills ACTIVE_MEDICATION<br/>--------------------<br/><u>id</u> (PK)<br/>name<br/>dosage<br/>prescibed_for<br/>prescibed_at<br/>prescribed_by (FK)<br/>patient_id (FK)<br/>doctor_name"]
+    ALLERGIES["fa:fa-exclamation-triangle ALLERGIES<br/>--------------------<br/><u>id</u> (PK)<br/>patient_id (FK)<br/>allergen<br/>severity"]
+    CHRONIC_CONDITIONS["fa:fa-heartbeat CHRONIC_CONDITIONS<br/>--------------------<br/><u>id</u> (PK)<br/>patient_id (FK)<br/>condition_name<br/>status<br/>diagnosed_date"]
+    EMERGENCY_INFO["fa:fa-ambulance EMERGENCY_INFO<br/>--------------------<br/><u>id</u> (PK)<br/>patient_id (FK)<br/>contact_name<br/>contact_phone<br/>contact_relationship<br/>contact_email"]
+    ACCESS_PERMISSIONS["fa:fa-key ACCESS_PERMISSIONS<br/>--------------------<br/><u>id</u> (PK)<br/>patient_id (FK)<br/>doctor_id (FK)<br/>status<br/>expires_at<br/>created_at<br/>updated_at"]
+    %% Relationship diamonds
+    R_HAS_PATIENT{"fa:fa-link HAS"}
+    R_HAS_DOCTOR{"fa:fa-link HAS"}
+    R_RUNS_CLINIC{"fa:fa-hospital RUNS"}
+    R_BOOKS{"fa:fa-calendar-check BOOKS"}
+    R_CONDUCTS{"fa:fa-user-md CONDUCTS"}
+    R_GENERATES_RX{"fa:fa-file-medical GENERATES"}
+    R_HAS_ITEMS{"fa:fa-list HAS_ITEMS"}
+    R_TRACKS_MEDS{"fa:fa-notes-medical TRACKS"}
+    R_HAS_ALLERGIES{"fa:fa-exclamation-circle HAS"}
+    R_HAS_CONDITIONS{"fa:fa-procedures HAS"}
+    R_HAS_EMERGENCY{"fa:fa-first-aid HAS"}
+    R_GRANTS_ACCESS{"fa:fa-unlock-alt GRANTS"}
+    %% Cardinality edges
+    USERS -- "1" --- R_HAS_PATIENT
+    R_HAS_PATIENT -- "0..1" --- PATIENTS
+    USERS -- "1" --- R_HAS_DOCTOR
+    R_HAS_DOCTOR -- "0..1" --- DOCTORS
+    DOCTORS -- "1" --- R_RUNS_CLINIC
+    R_RUNS_CLINIC -- "0..N" --- CLINICS
+    PATIENTS -- "1" --- R_BOOKS
+    R_BOOKS -- "0..N" --- CONSULTATIONS
+    DOCTORS -- "1" --- R_CONDUCTS
+    R_CONDUCTS -- "0..N" --- CONSULTATIONS
+    CONSULTATIONS -- "1" --- R_GENERATES_RX
+    R_GENERATES_RX -- "0..1" --- PRESCRIPTIONS
+    PRESCRIPTIONS -- "1" --- R_HAS_ITEMS
+    R_HAS_ITEMS -- "1..N" --- PRESCRIPTION_ITEMS
+    PATIENTS -- "1" --- R_TRACKS_MEDS
+    R_TRACKS_MEDS -- "0..N" --- ACTIVE_MEDICATION
+    DOCTORS -- "1" --- R_TRACKS_MEDS
+    PATIENTS -- "1" --- R_HAS_ALLERGIES
+    R_HAS_ALLERGIES -- "0..N" --- ALLERGIES
+    PATIENTS -- "1" --- R_HAS_CONDITIONS
+    R_HAS_CONDITIONS -- "0..N" --- CHRONIC_CONDITIONS
+    PATIENTS -- "1" --- R_HAS_EMERGENCY
+    R_HAS_EMERGENCY -- "0..N" --- EMERGENCY_INFO
+    PATIENTS -- "1" --- R_GRANTS_ACCESS
+    R_GRANTS_ACCESS -- "0..N" --- ACCESS_PERMISSIONS
+    DOCTORS -- "1" --- R_GRANTS_ACCESS
+    %% Additional direct Rx ownership relationships
+    PATIENTS -- "1" --- PRESCRIPTIONS
+    DOCTORS -- "1" --- PRESCRIPTIONS
+    %% Styles
+    classDef entity fill:#eaf3ff,stroke:#1d4ed8,stroke-width:2.2px,color:#0b2a6f,font-size:16px
+    classDef relation fill:#dbeafe,stroke:#1e40af,stroke-width:2.6px,color:#0b2a6f,font-size:17px,font-weight:bold
+    class USERS,PATIENTS,DOCTORS,CLINICS,CONSULTATIONS,PRESCRIPTIONS,PRESCRIPTION_ITEMS,ACTIVE_MEDICATION,ALLERGIES,CHRONIC_CONDITIONS,EMERGENCY_INFO,ACCESS_PERMISSIONS entity
+    class R_HAS_PATIENT,R_HAS_DOCTOR,R_RUNS_CLINIC,R_BOOKS,R_CONDUCTS,R_GENERATES_RX,R_HAS_ITEMS,R_TRACKS_MEDS,R_HAS_ALLERGIES,R_HAS_CONDITIONS,R_HAS_EMERGENCY,R_GRANTS_ACCESS relation
