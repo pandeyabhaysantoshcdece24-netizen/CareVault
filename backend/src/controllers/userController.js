@@ -13,14 +13,22 @@ async function getUserByEmailOrPhone(identifier, role) {
     return result.rows[0];
 }
 
-// Safe helper: query a user row by email and return a unified `password` field
-async function getPasswordColumn(email) {
-    const queryText = 'SELECT id, email, COALESCE(password, password_hash) AS password, role FROM users WHERE email = $1';
-    const result = await pool.query(queryText, [email]);
-    if (!result || result.rows.length === 0) {
-        return null;
+// Enhanced query function with structural safety guards
+async function getPasswordColumn(identifier) {
+    try {
+        // Double check your table name in Supabase. If your table is "User" or "Doctors", change this!
+        // Also ensure your columns are exactly: email, password, role
+        const queryText = 'SELECT id, email, phone, COALESCE(password, password_hash) AS password, role FROM users WHERE email = $1 OR phone = $1';
+        const result = await pool.query(queryText, [identifier]);
+
+        if (!result || result.rows.length === 0) {
+            return null;
+        }
+        return result.rows[0];
+    } catch (dbError) {
+        console.error('🔴 DATABASE QUERY EXECUTION CRASHED:', dbError.message);
+        throw dbError;
     }
-    return result.rows[0];
 }
 
 // Helper to detect which password column exists for signUp/update flows
@@ -76,31 +84,42 @@ const signUpUser = async (req, res, next) => {
 
 const userLogin = async (req, res) => {
     try {
-        const { role, email, phone, password, plain_password } = req.body;
+        const { email, phone, password, plain_password } = req.body;
         const loginPassword = password || plain_password;
         const identifier = email || phone;
 
-        if (!role || !identifier || !loginPassword) {
-            return res.status(400).json({ message: 'Role, email/phone, and password are required' });
+        if (!identifier || !loginPassword) {
+            return res.status(400).json({ message: 'Email/phone and password are required' });
         }
 
         console.log(`Processing login for: ${identifier}`);
 
-        const user = await getUserByEmailOrPhone(identifier, role);
+        const user = await getPasswordColumn(identifier);
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email/phone or password' });
+            console.log(`❌ No account found with identifier: ${identifier}`);
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        const isMatch = await bcrypt.compare(loginPassword, user.password_hash || user.password);
+        let isMatch = false;
+        if (user.password && (user.password.startsWith('$2b$') || user.password.startsWith('$2a$'))) {
+            isMatch = await bcrypt.compare(loginPassword, user.password);
+        } else {
+            isMatch = user.password === loginPassword;
+        }
+
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid email/phone or password' });
+            console.log(`❌ Password mismatch for user: ${identifier}`);
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
+        const secretKey = process.env.JWT_SECRET || 'carevault_development_secret_key_123';
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'fallback_secret',
+            { id: user.id, email: user.email, role: user.role || 'user' },
+            secretKey,
             { expiresIn: '24h' }
         );
+
+        console.log(`🟢 LOGIN SUCCESSFUL. Returning token for: ${identifier}`);
 
         return res.status(200).json({
             status: 'SUCCESS',
@@ -108,13 +127,17 @@ const userLogin = async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                role: user.role,
+                role: user.role || 'user',
             },
         });
     } catch (error) {
-        console.error('🔴 LOGIN CRASH DETAIL:', error.message);
+        console.error('🔴 MAIN USER LOGIN CONTROLLER CRASHED:', error.message);
         console.error(error.stack);
-        return res.status(500).json({ status: 'ERROR', message: 'Internal Server Error', details: error.message });
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An internal server error occurred while processing your request.',
+            details: error.message,
+        });
     }
 };
 
