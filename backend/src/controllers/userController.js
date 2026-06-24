@@ -4,6 +4,8 @@ const { isUuid } = require('../utils/validators');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
+const PASSWORD_COLUMN = 'password_hash';
+
 async function getUserByEmailOrPhone(identifier, role) {
     const queryText = `SELECT id, email, phone, password_hash, role FROM users WHERE role = $1 AND (email = $2 OR phone = $2)`;
     const result = await pool.query(queryText, [role, identifier]);
@@ -16,9 +18,7 @@ async function getUserByEmailOrPhone(identifier, role) {
 // Enhanced query function with structural safety guards
 async function getPasswordColumn(identifier) {
     try {
-        // Double check your table name in Supabase. If your table is "User" or "Doctors", change this!
-        // Also ensure your columns are exactly: email, password, role
-        const queryText = 'SELECT id, email, phone, COALESCE(password, password_hash) AS password, role FROM users WHERE email = $1 OR phone = $1';
+        const queryText = `SELECT id, email, phone, ${PASSWORD_COLUMN} AS password, role FROM users WHERE email = $1 OR phone = $1`;
         const result = await pool.query(queryText, [identifier]);
 
         if (!result || result.rows.length === 0) {
@@ -29,15 +29,6 @@ async function getPasswordColumn(identifier) {
         console.error('🔴 DATABASE QUERY EXECUTION CRASHED:', dbError.message);
         throw dbError;
     }
-}
-
-// Helper to detect which password column exists for signUp/update flows
-async function detectPasswordColumnName() {
-    const checkPassword = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password'");
-    if (checkPassword.rowCount > 0) return 'password';
-    const checkHash = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password_hash'");
-    if (checkHash.rowCount > 0) return 'password_hash';
-    return null;
 }
 
 const signUpUser = async (req, res, next) => {
@@ -59,13 +50,8 @@ const signUpUser = async (req, res, next) => {
             return errorResponse(res, 409, 'CONFLICT', 'User already exists');
         }
 
-        const passwordColumn = await detectPasswordColumnName();
-        if (!passwordColumn) {
-            return errorResponse(res, 500, 'INTERNAL_ERROR', 'No supported password column found in users table');
-        }
-
         const result = await pool.query(
-            `INSERT INTO users (email, phone, ${passwordColumn}, role) VALUES ($1, $2, $3, $4) RETURNING email, phone, role`,
+            `INSERT INTO users (email, phone, ${PASSWORD_COLUMN}, role) VALUES ($1, $2, $3, $4) RETURNING email, phone, role`,
             [email, phone, hashed_password, role]
         );
 
@@ -218,12 +204,8 @@ const updateUser = async (req, res, next) => {
         }
 
         if (plain_password) {
-            const passwordColumn = await detectPasswordColumnName();
-            if (!passwordColumn) {
-                return errorResponse(res, 500, 'INTERNAL_ERROR', 'No supported password column found in users table');
-            }
             const hashed_password = await bcrypt.hash(plain_password, 12);
-            updateQuery += `${passwordColumn} = $${paramCount}, `;
+            updateQuery += `${PASSWORD_COLUMN} = $${paramCount}, `;
             params.push(hashed_password);
             paramCount++;
         }
