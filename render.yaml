@@ -1,12 +1,11 @@
 services:
-  - type: web_service
+  - type: web
     name: carevault-backend
-    env: node
-    branch: main
+    runtime: node
     rootDir: backend
     buildCommand: npm install
     startCommand: npm run start
-    autoDeploy: true
+    plan: free
     envVars:
       - key: PORT
         value: '3000'
