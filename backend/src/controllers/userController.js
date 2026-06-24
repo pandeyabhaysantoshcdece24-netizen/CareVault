@@ -80,19 +80,22 @@ const userLogin = async (req, res, next) => {
     try {
         const { email, phone, role, plain_password } = req.body;
 
-        console.log('Login attempt for:', email || phone, 'role:', role);
+        console.log('=== INCOMING LOGIN ATTEMPT ===');
+        console.log('Email requested:', email);
+        console.log('Phone requested:', phone);
+        console.log('Role requested:', role);
 
         if (!role || !plain_password || (!email && !phone)) {
-            return errorResponse(res, 400, 'BAD_REQUEST', 'Fill all required fields: role, plain_password and (email or phone)');
+            return res.status(400).json({ status: 'FAIL', message: 'Fill all required fields: role, plain_password and (email or phone)' });
         }
 
         if (!['patient', 'doctor', 'admin'].includes(role)) {
-            return errorResponse(res, 400, 'BAD_REQUEST', 'Invalid role');
+            return res.status(400).json({ status: 'FAIL', message: 'Invalid role' });
         }
 
         const passwordColumn = await getPasswordColumn();
         if (!passwordColumn) {
-            return errorResponse(res, 500, 'INTERNAL_ERROR', 'No supported password column found in users table');
+            return res.status(500).json({ status: 'CRASH', message: 'No supported password column found in users table' });
         }
 
         const userResult = await pool.query(
@@ -101,14 +104,17 @@ const userLogin = async (req, res, next) => {
             [role, email || null, phone || null]
         );
 
+        console.log('Database response rows count:', userResult.rowCount);
+        console.log('Database response rows:', userResult.rows);
+
         if (userResult.rowCount === 0) {
-            return errorResponse(res, 404, 'NOT_FOUND', 'User not found');
+            return res.status(404).json({ status: 'FAIL', message: 'User not found' });
         }
 
         const user = userResult.rows[0];
         const passwordMatch = await isPasswordMatch(user.stored_password, plain_password);
         if (!passwordMatch) {
-            return errorResponse(res, 401, 'UNAUTHORIZED', 'Invalid credentials');
+            return res.status(401).json({ status: 'FAIL', message: 'Invalid credentials' });
         }
 
         const payload = {
@@ -121,10 +127,17 @@ const userLogin = async (req, res, next) => {
         const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
         const token = jwt.sign(payload, jwtSecret, { expiresIn: '24h' });
 
-        return successResponse(res, 200, { token }, 'Login successful');
-    } catch (error) {
-        console.error('🔴 CRITICAL LOGIN ERROR:', error.message);
-        return res.status(500).json({ error: 'Internal Server Error', details: error.message });
+        return res.status(200).json({ status: 'OK', token });
+    } catch (dbError) {
+        console.log('!!! PURE SYSTEM ERROR DETECTED !!!');
+        console.log(dbError);
+        console.error(dbError.stack);
+
+        return res.status(500).json({
+            status: 'CRASH',
+            message: dbError.message,
+            stack: dbError.stack,
+        });
     }
 };
 
