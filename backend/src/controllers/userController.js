@@ -76,28 +76,26 @@ const signUpUser = async (req, res, next) => {
 
 const userLogin = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { role, email, phone, password, plain_password } = req.body;
+        const loginPassword = password || plain_password;
+        const identifier = email || phone;
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+        if (!role || !identifier || !loginPassword) {
+            return res.status(400).json({ message: 'Role, email/phone, and password are required' });
         }
 
-        console.log(`Processing login for: ${email}`);
+        console.log(`Processing login for: ${identifier}`);
 
-        // Call our safe query function
-        const user = await getPasswordColumn(email);
-
+        const user = await getUserByEmailOrPhone(identifier, role);
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid email/phone or password' });
         }
 
-        // Compare incoming password with hash from the database
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(loginPassword, user.password_hash || user.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid email/phone or password' });
         }
 
-        // Generate your auth token (Make sure JWT_SECRET is in Railway variables)
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET || 'fallback_secret',
