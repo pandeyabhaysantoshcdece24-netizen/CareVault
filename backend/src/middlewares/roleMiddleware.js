@@ -1,5 +1,9 @@
 const pool = require('../config/db');
-const { errorResponse } = require('../utils/responseFormatter');
+// const { errorResponse } = require('../utils/responseFormatter');
+
+function errorResponse(res, statusCode, statusString, message) {
+    return res.status(statusCode).json({ status: statusString, message: message });
+}
 
 function requireRole(role) {
     return (req, res, next) => {
