@@ -24,6 +24,11 @@ app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+    console.log('[REQUEST]', req.method, req.originalUrl);
+    next();
+});
+
 app.get('/health', (req, res) => {
     res.status(200).json({ success: true, data: { ok: true }, message: 'Operation successful.' });
 });
