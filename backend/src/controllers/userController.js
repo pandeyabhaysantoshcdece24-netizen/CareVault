@@ -80,6 +80,8 @@ const userLogin = async (req, res, next) => {
     try {
         const { email, phone, role, plain_password } = req.body;
 
+        console.log('Login attempt for:', email || phone, 'role:', role);
+
         if (!role || !plain_password || (!email && !phone)) {
             return errorResponse(res, 400, 'BAD_REQUEST', 'Fill all required fields: role, plain_password and (email or phone)');
         }
@@ -121,7 +123,8 @@ const userLogin = async (req, res, next) => {
 
         return successResponse(res, 200, { token }, 'Login successful');
     } catch (error) {
-        return next(error);
+        console.error('🔴 CRITICAL LOGIN ERROR:', error.message);
+        return res.status(500).json({ error: 'Internal Server Error', details: error.message });
     }
 };
 
