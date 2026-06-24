@@ -6,8 +6,16 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Configure CORS to allow all origins
-app.use(cors({ origin: '*' }));
+// Configure CORS to allow all origins with full configuration
+app.use(cors({
+  origin: '*', // Allows all domains temporarily to break through the CORS wall
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Crucial: Handle preflight requests globally
+app.options('*', cors());
 
 app.use(express.json());
 
