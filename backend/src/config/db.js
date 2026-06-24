@@ -1,9 +1,14 @@
 const { Pool } = require('pg');
 
-// HARDCODED CONNECTION POOLER TEST STRING
-const connectionString = 'postgresql://postgres.irpzynndnsmaokampfhq:Kusum%409999@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres';
+// Use Railway DATABASE_URL environment variable
+const connectionString = process.env.DATABASE_URL;
 
-console.log('=== TESTING HARDCODED CONNECTION POOL ===');
+if (!connectionString) {
+  console.error('❌ DATABASE_URL environment variable is not set!');
+  process.exit(1);
+}
+
+console.log('🔵 Connecting to database with URL from env...');
 
 const pool = new Pool({
   connectionString: connectionString,
