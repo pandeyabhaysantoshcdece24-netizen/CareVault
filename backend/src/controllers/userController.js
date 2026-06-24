@@ -5,22 +5,28 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 async function getPasswordColumn() {
-    const result = await pool.query(
-        `SELECT column_name
-         FROM information_schema.columns
-         WHERE table_schema = 'public'
-           AND table_name = 'users'
-                     AND column_name IN ('password_hash', 'hashed_password', 'plain_password', 'password')`
-    );
+    try {
+        const result = await pool.query(
+            `SELECT column_name
+             FROM information_schema.columns
+             WHERE table_schema = 'public'
+               AND table_name = 'users'
+               AND column_name IN ('password_hash', 'hashed_password', 'plain_password', 'password')`
+        );
 
-    const available = new Set(result.rows.map((row) => row.column_name));
+        const available = new Set(result.rows.map((row) => row.column_name));
 
-    if (available.has('password_hash')) return 'password_hash';
-    if (available.has('hashed_password')) return 'hashed_password';
-    if (available.has('plain_password')) return 'plain_password';
-    if (available.has('password')) return 'password';
+        if (available.has('password_hash')) return 'password_hash';
+        if (available.has('hashed_password')) return 'hashed_password';
+        if (available.has('plain_password')) return 'plain_password';
+        if (available.has('password')) return 'password';
 
-    return null;
+        return null;
+    } catch (err) {
+        console.error('🔴 getPasswordColumn() QUERY FAILED:', err.message);
+        console.error('Full error:', err);
+        throw err;
+    }
 }
 
 async function isPasswordMatch(storedPassword, plainPassword) {
