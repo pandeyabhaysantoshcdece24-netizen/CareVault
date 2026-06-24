@@ -4,20 +4,32 @@ const { isUuid } = require('../utils/validators');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
-async function getPasswordColumn() {
-    // The users table uses password_hash column
-    return 'password_hash';
+async function getUserByEmailOrPhone(identifier, role) {
+    const queryText = `SELECT id, email, phone, password_hash, role FROM users WHERE role = $1 AND (email = $2 OR phone = $2)`;
+    const result = await pool.query(queryText, [role, identifier]);
+    if (result.rowCount === 0) {
+        return null;
+    }
+    return result.rows[0];
 }
 
-async function isPasswordMatch(storedPassword, plainPassword) {
-    if (!storedPassword) return false;
-
-    // Supports legacy plaintext rows while preferring bcrypt hashes.
-    if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
-        return bcrypt.compare(plainPassword, storedPassword);
+// Safe helper: query a user row by email and return a unified `password` field
+async function getPasswordColumn(email) {
+    const queryText = 'SELECT id, email, COALESCE(password, password_hash) AS password, role FROM users WHERE email = $1';
+    const result = await pool.query(queryText, [email]);
+    if (!result || result.rows.length === 0) {
+        return null;
     }
+    return result.rows[0];
+}
 
-    return storedPassword === plainPassword;
+// Helper to detect which password column exists for signUp/update flows
+async function detectPasswordColumnName() {
+    const checkPassword = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password'");
+    if (checkPassword.rowCount > 0) return 'password';
+    const checkHash = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password_hash'");
+    if (checkHash.rowCount > 0) return 'password_hash';
+    return null;
 }
 
 const signUpUser = async (req, res, next) => {
@@ -39,7 +51,7 @@ const signUpUser = async (req, res, next) => {
             return errorResponse(res, 409, 'CONFLICT', 'User already exists');
         }
 
-        const passwordColumn = await getPasswordColumn();
+        const passwordColumn = await detectPasswordColumnName();
         if (!passwordColumn) {
             return errorResponse(res, 500, 'INTERNAL_ERROR', 'No supported password column found in users table');
         }
@@ -62,81 +74,49 @@ const signUpUser = async (req, res, next) => {
     }
 };
 
-const userLogin = async (req, res, next) => {
+const userLogin = async (req, res) => {
     try {
-        const { email, phone, role, plain_password } = req.body;
+        const { email, password } = req.body;
 
-        console.log('=== INCOMING LOGIN ATTEMPT ===');
-        console.log('Received body:', JSON.stringify(req.body, null, 2));
-        console.log('Email:', email, 'Phone:', phone, 'Role:', role);
-
-        if (!role || !plain_password || (!email && !phone)) {
-            console.log('❌ Validation failed: missing required fields');
-            return res.status(400).json({ status: 'FAIL', message: 'Fill all required fields: role, plain_password and (email or phone)' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        if (!['patient', 'doctor', 'admin'].includes(role)) {
-            console.log('❌ Invalid role:', role);
-            return res.status(400).json({ status: 'FAIL', message: 'Invalid role' });
+        console.log(`Processing login for: ${email}`);
+
+        // Call our safe query function
+        const user = await getPasswordColumn(email);
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        const passwordColumn = await getPasswordColumn();
-        if (!passwordColumn) {
-            console.log('❌ No password column found');
-            return res.status(500).json({ status: 'CRASH', message: 'No supported password column found in users table' });
+        // Compare incoming password with hash from the database
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        console.log('🔍 Querying database with column:', passwordColumn);
-        const userResult = await pool.query(
-            `SELECT id, ${passwordColumn} AS stored_password FROM users
-             WHERE role = $1 AND (email = $2 OR phone = $3)`,
-            [role, email || null, phone || null]
+        // Generate your auth token (Make sure JWT_SECRET is in Railway variables)
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET || 'fallback_secret',
+            { expiresIn: '24h' }
         );
 
-        console.log('✅ Database query successful. Rows found:', userResult.rowCount);
-        console.log('User data:', userResult.rows);
-
-        if (userResult.rowCount === 0) {
-            console.log('❌ User not found with email:', email, 'phone:', phone, 'role:', role);
-            return res.status(404).json({ status: 'FAIL', message: 'User not found' });
-        }
-
-        const user = userResult.rows[0];
-        console.log('🔐 Checking password match...');
-        const passwordMatch = await isPasswordMatch(user.stored_password, plain_password);
-        
-        if (!passwordMatch) {
-            console.log('❌ Password mismatch');
-            return res.status(401).json({ status: 'FAIL', message: 'Invalid credentials' });
-        }
-
-        console.log('✅ Password matches. Generating token...');
-        const payload = {
-            userId: user.id,
-            role,
-            email: email || null,
-            phone: phone || null,
-        };
-
-        const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
-        const token = jwt.sign(payload, jwtSecret, { expiresIn: '24h' });
-
-        console.log('✅ TOKEN GENERATED SUCCESSFULLY:', token.substring(0, 20) + '...');
-        return res.status(200).json({ status: 'OK', token });
-    } catch (dbError) {
-        console.error('❌ EXCEPTION CAUGHT IN LOGIN:');
-        console.error('Error name:', dbError.name);
-        console.error('Error message:', dbError.message);
-        console.error('Error code:', dbError.code);
-        console.error('Full error:', dbError);
-        console.error(dbError.stack);
-
-        return res.status(500).json({
-            status: 'CRASH',
-            message: dbError.message,
-            code: dbError.code,
-            detail: dbError.detail,
+        return res.status(200).json({
+            status: 'SUCCESS',
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+            },
         });
+    } catch (error) {
+        console.error('🔴 LOGIN CRASH DETAIL:', error.message);
+        console.error(error.stack);
+        return res.status(500).json({ status: 'ERROR', message: 'Internal Server Error', details: error.message });
     }
 };
 
@@ -217,7 +197,7 @@ const updateUser = async (req, res, next) => {
         }
 
         if (plain_password) {
-            const passwordColumn = await getPasswordColumn();
+            const passwordColumn = await detectPasswordColumnName();
             if (!passwordColumn) {
                 return errorResponse(res, 500, 'INTERNAL_ERROR', 'No supported password column found in users table');
             }
@@ -268,10 +248,10 @@ const deleteUser = async (req, res, next) => {
 };
 
 module.exports = {
-    signUpUser,
-    userLogin,
-    getUserById,
-    getAllUsers,
-    updateUser,
-    deleteUser
+    signUpUser: signUpUser,
+    userLogin: userLogin,
+    getUserById: getUserById,
+    getAllUsers: getAllUsers,
+    updateUser: updateUser,
+    deleteUser: deleteUser
 };
