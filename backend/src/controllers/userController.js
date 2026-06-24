@@ -67,42 +67,50 @@ const userLogin = async (req, res, next) => {
         const { email, phone, role, plain_password } = req.body;
 
         console.log('=== INCOMING LOGIN ATTEMPT ===');
-        console.log('Email requested:', email);
-        console.log('Phone requested:', phone);
-        console.log('Role requested:', role);
+        console.log('Received body:', JSON.stringify(req.body, null, 2));
+        console.log('Email:', email, 'Phone:', phone, 'Role:', role);
 
         if (!role || !plain_password || (!email && !phone)) {
+            console.log('❌ Validation failed: missing required fields');
             return res.status(400).json({ status: 'FAIL', message: 'Fill all required fields: role, plain_password and (email or phone)' });
         }
 
         if (!['patient', 'doctor', 'admin'].includes(role)) {
+            console.log('❌ Invalid role:', role);
             return res.status(400).json({ status: 'FAIL', message: 'Invalid role' });
         }
 
         const passwordColumn = await getPasswordColumn();
         if (!passwordColumn) {
+            console.log('❌ No password column found');
             return res.status(500).json({ status: 'CRASH', message: 'No supported password column found in users table' });
         }
 
+        console.log('🔍 Querying database with column:', passwordColumn);
         const userResult = await pool.query(
             `SELECT id, ${passwordColumn} AS stored_password FROM users
              WHERE role = $1 AND (email = $2 OR phone = $3)`,
             [role, email || null, phone || null]
         );
 
-        console.log('Database response rows count:', userResult.rowCount);
-        console.log('Database response rows:', userResult.rows);
+        console.log('✅ Database query successful. Rows found:', userResult.rowCount);
+        console.log('User data:', userResult.rows);
 
         if (userResult.rowCount === 0) {
+            console.log('❌ User not found with email:', email, 'phone:', phone, 'role:', role);
             return res.status(404).json({ status: 'FAIL', message: 'User not found' });
         }
 
         const user = userResult.rows[0];
+        console.log('🔐 Checking password match...');
         const passwordMatch = await isPasswordMatch(user.stored_password, plain_password);
+        
         if (!passwordMatch) {
+            console.log('❌ Password mismatch');
             return res.status(401).json({ status: 'FAIL', message: 'Invalid credentials' });
         }
 
+        console.log('✅ Password matches. Generating token...');
         const payload = {
             userId: user.id,
             role,
@@ -113,16 +121,21 @@ const userLogin = async (req, res, next) => {
         const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
         const token = jwt.sign(payload, jwtSecret, { expiresIn: '24h' });
 
+        console.log('✅ TOKEN GENERATED SUCCESSFULLY:', token.substring(0, 20) + '...');
         return res.status(200).json({ status: 'OK', token });
     } catch (dbError) {
-        console.log('!!! PURE SYSTEM ERROR DETECTED !!!');
-        console.log(dbError);
+        console.error('❌ EXCEPTION CAUGHT IN LOGIN:');
+        console.error('Error name:', dbError.name);
+        console.error('Error message:', dbError.message);
+        console.error('Error code:', dbError.code);
+        console.error('Full error:', dbError);
         console.error(dbError.stack);
 
         return res.status(500).json({
             status: 'CRASH',
             message: dbError.message,
-            stack: dbError.stack,
+            code: dbError.code,
+            detail: dbError.detail,
         });
     }
 };
