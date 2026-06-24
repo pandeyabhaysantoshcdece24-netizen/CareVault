@@ -6,18 +6,8 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Configure CORS for Vercel deployments and local development
-app.use(cors({
-  origin: [
-    'https://carevault-dusky.vercel.app',
-    'https://care-vault-hvocj5qnu-care-vault.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Configure CORS to allow all origins
+app.use(cors({ origin: '*' }));
 
 app.use(express.json());
 
