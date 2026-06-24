@@ -6,16 +6,21 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Configure CORS to allow all origins with full configuration
-app.use(cors({
-  origin: '*', // Allows all domains temporarily to break through the CORS wall
+// Configure CORS options for your Vercel frontend deployments
+const corsOptions = {
+  origin: [
+    'https://care-vault-hvocj5qnu-care-vault.vercel.app',
+    'https://carevault-dusky.vercel.app'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+  credentials: true,
+  optionsSuccessStatus: 200
+};
 
-// Crucial: Handle preflight requests globally
-app.options('*', cors());
+// Apply CORS middleware globally BEFORE your routes
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
