@@ -6,21 +6,19 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Configure CORS options for your Vercel frontend deployments
-const allowedOrigins = [
-  'https://care-vault-mvmmbib0c-care-vault.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
-
+// Apply dynamic CORS safelist logic for Vercel deploys and local development
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow local development tools and Postman tests
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
+    const isVercelDeployment = origin.includes('care-vault') && origin.endsWith('.vercel.app');
+
+    if (isLocalhost || isVercelDeployment) {
       callback(null, true);
     } else {
+      console.warn(`🔴 Blocked by CORS policy: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
