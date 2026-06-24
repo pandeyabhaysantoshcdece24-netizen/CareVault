@@ -1,25 +1,34 @@
 const { Pool } = require('pg');
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error('[DB] DATABASE_URL is not set. Database pool cannot connect.');
-}
+console.log('=== INITIALIZING DATABASE POOL ===');
+// This will tell us if Railway is actually reading your environment variable
+console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 
 const pool = new Pool({
-  connectionString,
+  connectionString: process.env.DATABASE_URL,
   ssl: {
-    // This allows Node to accept Supabase's dynamically generated cloud certificate
     rejectUnauthorized: false
+  },
+  // Stop waiting forever if the database is unreachable
+  connectionTimeoutMillis: 5000
+});
+
+// Force global connection errors to print immediately
+pool.on('error', (err) => {
+  console.error('🔴 GLOBAL DATABASE POOL ERROR:', err.message);
+  console.error(err.stack);
+});
+
+// Test the connection immediately on startup
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('🔴 INITIAL DATABASE TEST QUERY FAILED:', err.message);
+    console.error(err.stack);
+  } else {
+    console.log('🟢 DATABASE CONNECTED SUCCESSFULLY AT:', res.rows[0].now);
   }
 });
 
-// A quick helper log to verify connection errors in your Railway dashboard
-pool.on('connect', () => {
-  console.log('[DB] PostgreSQL pool connected');
-});
-
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle database client:', err.message);
-});
+module.exports = pool;
 
 module.exports = pool;
