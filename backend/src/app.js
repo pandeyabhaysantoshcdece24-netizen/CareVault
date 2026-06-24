@@ -1,22 +1,23 @@
 const express = require('express');
+const cors = require('cors');
 
 const apiRoutes = require('./routes/api');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Allow API explorer and frontend apps to call the backend from different origins.
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(204).end();
-    }
-
-    return next();
-});
+// Configure CORS for Vercel deployments and local development
+app.use(cors({
+  origin: [
+    'https://carevault-dusky.vercel.app',
+    'https://care-vault-hvocj5qnu-care-vault.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 
