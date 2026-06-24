@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const envBase = import.meta?.env?.VITE_API_URL || process?.env?.NEXT_PUBLIC_API_URL || '';
+const baseURL = envBase ? `${envBase.replace(/\/+$/, '')}/api` : '/api';
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL,
   timeout: 20000,
 });
 
