@@ -1,11 +1,9 @@
 import axios from 'axios';
 
-// Prefer Vite env, then Next env, otherwise default to Railway production URL
-const envBase =
-  import.meta?.env?.VITE_API_URL ||
-  process?.env?.NEXT_PUBLIC_API_URL ||
-  'https://carevault-production-b2c0.up.railway.app';
-const baseURL = `${envBase.replace(/\/+$/, '')}/api`;
+import { API_BASE_URL } from './config';
+
+// Use configured API base and ensure trailing slashes are trimmed
+const baseURL = `${API_BASE_URL.replace(/\/+$/, '')}/api`;
 
 const apiClient = axios.create({
   baseURL,
