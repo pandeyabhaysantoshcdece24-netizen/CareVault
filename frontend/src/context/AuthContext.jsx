@@ -1,5 +1,5 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 
 export const AuthContext = createContext(null);
 
@@ -18,8 +18,9 @@ function parseStoredUser() {
 
     return {
       token,
-      userId: decoded?.userId || null,
-      role: decoded?.role || null,
+      userId: decoded?.id ?? decoded?.userId ?? null,
+      role: decoded?.role ?? null,
+      email: decoded?.email ?? null,
     };
   } catch {
     localStorage.removeItem('token');
@@ -47,8 +48,9 @@ export function AuthProvider({ children }) {
         const decoded = jwtDecode(token);
         const nextAuth = {
           token,
-          userId: decoded?.userId || null,
-          role: decoded?.role || null,
+          userId: decoded?.id ?? decoded?.userId ?? null,
+          role: decoded?.role ?? null,
+          email: decoded?.email ?? null,
         };
 
         localStorage.setItem('token', token);

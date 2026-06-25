@@ -101,7 +101,7 @@ function LoginPage() {
       };
 
       const response = await loginUser(payload);
-      const token = response?.data?.token;
+      const token = response?.token || response?.data?.token;
 
       if (!token) {
         setErrorMessage('Token not returned by server. Please try again.');
@@ -118,8 +118,12 @@ function LoginPage() {
         navigate('/dashboard/admin');
       }
     } catch (error) {
-      const apiMessage = error?.response?.data?.error?.message;
-      setErrorMessage(apiMessage || 'Login failed. Please verify your credentials.');
+      const apiMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Login failed. Please verify your credentials.';
+      setErrorMessage(apiMessage);
     } finally {
       setIsSubmitting(false);
     }
