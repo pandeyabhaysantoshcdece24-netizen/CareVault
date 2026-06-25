@@ -109,7 +109,7 @@ function LoginPage() {
       }
 
       login(token);
-
+      // Navigate to a valid frontend route; do not navigate to /api/users/login.
       if (activeRole === 'patient') {
         navigate('/dashboard/patient');
       } else if (activeRole === 'doctor') {
